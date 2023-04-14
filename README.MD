@@ -6,6 +6,7 @@ The goal of this project is to allow creating and registering standard PlateUp O
 
 * Subscribe to [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2898033283) in the workshop
 * Subscribe to [KitchenLib](https://steamcommunity.com/sharedfiles/filedetails/?id=2898069883) in the workshop
+* Subscribe to [CodelessModInterop](https://steamcommunity.com/sharedfiles/filedetails/?id=2962181953) in the workshop
 
 ## Getting Started
 
