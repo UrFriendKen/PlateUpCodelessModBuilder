@@ -1,7 +1,7 @@
 {
   "Name": "CMB_DecorFlooringExample",
-  "UseCustomMaterial": false,
-  "MaterialName": "Floor - Special - Workshop",
+  "UseCustomMaterial": true,
+  "MaterialName": "StonePavement",
   "Type": 1,
   "IsAvailable": true
 }

@@ -1,0 +1,15 @@
+{
+  "Name": "CMB_ExampleUnlockCard",
+  "IsUnlockable": true,
+  "UnlockGroup": "Generic",
+  "CardType": "Default",
+  "MinimumFranchiseTier": 0,
+  "IsExactFranchiseTier": false,
+  "ExpRewardLevel": "Medium",
+  "CustomerMultiplierLevel": "SmallIncrease",
+  "SelectionBias": 0.0,
+  "RequiredCards": ["Customers Require Walking"],
+  "BlockedByCards": ["Messy Customers"],
+  "UnlockEffectNames": ["CMB_ExampleUnlockEffect", "CMB_ExampleUnlockEffect2"],
+  "UnlockInfoNames": ["CMB_ExampleUnlockInfo"]
+}

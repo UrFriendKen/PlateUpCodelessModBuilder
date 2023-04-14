@@ -1,4 +1,5 @@
 ﻿using CodelessModBuilder.src.Customs;
+using KitchenData;
 using KitchenLib;
 using KitchenLib.Event;
 using KitchenLib.Utils;
@@ -21,7 +22,7 @@ namespace CodelessModBuilder.src
         // Mod Version must follow semver notation e.g. "1.2.3"
         public static string Mod_Guid = "IcedMilo.PlateUp.CodelessModBuilder";
         public static string Mod_Name = "CodelessModBuilder";
-        public static string Mod_Version = "0.1.0";
+        public static string Mod_Version = "0.1.1";
         public static string Mod_Author = "IcedMilo";
         public const string MOD_GAMEVERSION = ">=1.1.5";
         // Game version this mod is designed for in semver
@@ -33,13 +34,18 @@ namespace CodelessModBuilder.src
         public static readonly Dictionary<string, ResourceType> FOLDER_MAPPINGS = new Dictionary<string, ResourceType>()
         {
             { "materials", ResourceType.JsonMaterial },
-            { "decors", ResourceType.JsonDecor }
+            { "decors", ResourceType.JsonDecor },
+            { "unlockeffect", ResourceType.JsonUnlockEffect },
+            { "unlockcard", ResourceType.JsonUnlockCard },
+            { "unlockinfo", ResourceType.JsonUnlockInfo }
         };
 
         public static readonly HashSet<string> ALLOWED_FILE_EXTENSIONS = new HashSet<string>()
         {
             "json"
         };
+
+        private static ResourceDirectory resourceDirectory;
 
         public Main() : base(Mod_Guid, Mod_Name, Mod_Author, Mod_Version, MOD_GAMEVERSION, Assembly.GetExecutingAssembly())
         {
@@ -82,10 +88,12 @@ namespace CodelessModBuilder.src
 
         protected override void OnInitialise()
         {
+            resourceDirectory.Initialise(GameData.Main);
         }
 
         protected override void OnUpdate()
         {
+            resourceDirectory.ContinuousInitialise(GameData.Main);
         }
 
         protected override void OnPostActivate(Mod mod)
@@ -94,7 +102,7 @@ namespace CodelessModBuilder.src
 
             var assembly = Assembly.GetExecutingAssembly();
 
-            ResourceDirectory resourceDirectory = new ResourceDirectory();
+            resourceDirectory = new ResourceDirectory();
 
             foreach (var resourceName in assembly.GetManifestResourceNames())
             {
@@ -174,6 +182,15 @@ namespace CodelessModBuilder.src
                                 break;
                             case ResourceType.JsonDecor:
                                 resourceDirectory.Add(new JsonDecor(filename, text));
+                                break;
+                            case ResourceType.JsonUnlockInfo:
+                                resourceDirectory.Add(new JsonUnlocKInfo(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonUnlockEffect:
+                                resourceDirectory.Add(new JsonUnlockEffect(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonUnlockCard:
+                                resourceDirectory.Add(new JsonUnlockCard(filename, text, resourceDirectory));
                                 break;
                             case ResourceType.Unknown:
                             default:
