@@ -10,6 +10,6 @@
   "SelectionBias": 0.0,
   "RequiredCards": ["Customers Require Walking"],
   "BlockedByCards": ["Messy Customers"],
-  "UnlockEffectNames": ["CMB_ExampleUnlockEffect", "CMB_ExampleUnlockEffect2"],
+  "UnlockEffectNames": ["CMB_ExampleUnlockEffect"],
   "UnlockInfoNames": ["CMB_ExampleUnlockInfo"]
 }

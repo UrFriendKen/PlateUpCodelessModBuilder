@@ -1,4 +1,6 @@
 ﻿using CodelessModBuilder.src.Customs;
+using CodelessModInterop;
+using Kitchen;
 using KitchenData;
 using KitchenLib;
 using KitchenLib.Customs;
@@ -15,12 +17,16 @@ namespace CodelessModBuilder.src
 {
     public enum ResourceType
     {
-        Unknown = 0,
-        JsonMaterial = 100,
-        JsonUnlockInfo = 150,
-        JsonDecor = 200,
-        JsonUnlockEffect = 300,
-        JsonUnlockCard = 400
+        Unknown,
+        JsonMaterial,
+        JsonUnlockInfo,
+        JsonDecor,
+        JsonUnlockCard,
+        JsonUnlockEffect,
+        JsonCApplianceSpeedModifier,
+        JsonCAppliesStatus,
+        JsonCTableModifier,
+        JsonCQueueModifier
     }
 
     public interface IInitialisableGDOResource
@@ -30,6 +36,8 @@ namespace CodelessModBuilder.src
         void ContinuousInitialise(in GameData gameData);
     }
 
+    public interface IEffectTypeResource { }
+
     public abstract class Resource
     {
         public virtual string Name { get; protected set; }
@@ -37,10 +45,13 @@ namespace CodelessModBuilder.src
         public abstract ResourceType Type { get; }
         public virtual bool WasRegistered { get; protected set; } = false;
 
-        public Resource(string name, string data)
+        public readonly ResourceDirectory Directory;
+
+        public Resource(string name, string data, ResourceDirectory resourceDirectory)
         {
             Name = name;
             Data = data;
+            Directory = resourceDirectory;
         }
 
         public abstract void Register(in GameData gameData);
@@ -52,7 +63,7 @@ namespace CodelessModBuilder.src
 
         private T _convertedCache;
 
-        protected JsonResource(string name, string data) : base(name, data)
+        protected JsonResource(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
         {
             JsonObject = JObject.Parse(data);
         }
@@ -80,13 +91,27 @@ namespace CodelessModBuilder.src
             return default;
         }
 
-        protected abstract bool LoadObjectFromJSON(JObject jsonObject, out T obj);
+        protected virtual bool LoadObjectFromJSON(JObject jsonObject, out T obj)
+        {
+            obj = default;
+            try
+            {
+                obj = jsonObject.ToObject<T>();
+                return true;
+            }
+            catch
+            {
+                string className = GetType().Name;
+                Main.LogError($"Could not load {(className.ToLower().StartsWith("json") && className.Length > 4? className.Substring(4) : className)}.");
+            }
+            return false;
+        }
     }
 
     public class JsonMaterial : JsonResource<Material>
     {
         public override ResourceType Type => ResourceType.JsonMaterial;
-        public JsonMaterial(string name, string data) : base(name, data)
+        public JsonMaterial(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
         {
         }
 
@@ -98,6 +123,7 @@ namespace CodelessModBuilder.src
                 return;
             }
             CustomMaterials.CustomMaterialsIndex.Add(material.name, material);
+            ModdedResourceRegistry.RegisterModdedMaterial(material);
             Main.LogInfo($"Successfully registered Material - {material.name}");
         }
 
@@ -141,7 +167,7 @@ namespace CodelessModBuilder.src
     {
         public override ResourceType Type => ResourceType.JsonDecor;
 
-        public JsonDecor(string name, string data) : base(name, data)
+        public JsonDecor(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
         {
         }
 
@@ -172,7 +198,7 @@ namespace CodelessModBuilder.src
             decor.IsAvailable = obj.IsAvailable;
 
             gameData.Objects.Add(id, decor);
-
+            ModdedResourceRegistry.RegisterModdedGDO(Directory.ModName, decor);
             Main.LogInfo($"Successfully registered {obj.Name} ({id})");
         }
 
@@ -185,55 +211,22 @@ namespace CodelessModBuilder.src
             catch { }
             return null;
         }
-
-        protected override bool LoadObjectFromJSON(JObject jsonObject, out DecorData decorData)
-        {
-            decorData = null;
-            try
-            {
-                decorData = jsonObject.ToObject<DecorData>();
-                return true;
-            }
-            catch
-            {
-                Main.LogError("Could not load DecorData.");
-            }
-            return false;
-        }
     }
 
     public class JsonUnlocKInfo : JsonResource<UnlockInfoData>
     {
         public override ResourceType Type => ResourceType.JsonUnlockInfo;
 
-        public readonly ResourceDirectory Directory;
-
-        public JsonUnlocKInfo(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data)
+        public JsonUnlocKInfo(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
         {
-            Directory = resourceDirectory;
         }
 
         public override void OnRegister(in GameData gameData, UnlockInfoData obj)
         {
             if (obj.TryConvert(out UnlockInfo unlockInfo) && Directory.AddLocalisationItem(obj.Name, unlockInfo))
             {
-                Main.LogInfo($"Successfully registered UnlockInfo - {obj.Name}");
+                Main.LogInfo($"Successfully registered Localisation - {obj.Name}");
             }
-        }
-
-        protected override bool LoadObjectFromJSON(JObject jsonObject, out UnlockInfoData unlockInfoData)
-        {
-            unlockInfoData = null;
-            try
-            {
-                unlockInfoData = jsonObject.ToObject<UnlockInfoData>();
-                return true;
-            }
-            catch
-            {
-                Main.LogError("Could not load UnlockInfo.");
-            }
-            return false;
         }
     }
 
@@ -241,11 +234,8 @@ namespace CodelessModBuilder.src
     {
         public override ResourceType Type => ResourceType.JsonUnlockEffect;
 
-        public readonly ResourceDirectory Directory;
-
-        public JsonUnlockEffect(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data)
+        public JsonUnlockEffect(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
         {
-            Directory = resourceDirectory;
         }
 
         public override void OnRegister(in GameData gameData, UnlockEffectData obj)
@@ -255,21 +245,6 @@ namespace CodelessModBuilder.src
                 Main.LogInfo($"Successfully registered UnlockEffect - {obj.Name}");
             }
         }
-
-        protected override bool LoadObjectFromJSON(JObject jsonObject, out UnlockEffectData unlockEffectData)
-        {
-            unlockEffectData = null;
-            try
-            {
-                unlockEffectData = jsonObject.ToObject<UnlockEffectData>();
-                return true;
-            }
-            catch
-            {
-                Main.LogError("Could not load UnlockEffect.");
-            }
-            return false;
-        }
     }
 
     public class JsonUnlockCard : JsonResource<UnlockCardData>, IInitialisableGDOResource
@@ -277,8 +252,6 @@ namespace CodelessModBuilder.src
         public bool WasInitialised { get; set; } = false;
 
         public override ResourceType Type => ResourceType.JsonUnlockCard;
-
-        public readonly ResourceDirectory Directory;
 
         protected string unlockCardName = string.Empty;
 
@@ -290,9 +263,8 @@ namespace CodelessModBuilder.src
 
         protected List<string> blockedByUnlockNames;
 
-        public JsonUnlockCard(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data)
+        public JsonUnlockCard(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
         {
-            Directory = resourceDirectory;
         }
 
         public override void OnRegister(in GameData gameData, UnlockCardData obj)
@@ -357,7 +329,7 @@ namespace CodelessModBuilder.src
             blockedByUnlockNames = obj.BlockedByCards ?? new List<string>();
 
             gameData.Objects.Add(id, unlockCard);
-
+            ModdedResourceRegistry.RegisterModdedGDO(Directory.ModName, unlockCard);
             Main.LogInfo($"Successfully registered {obj.Name} ({id})");
         }
 
@@ -405,7 +377,7 @@ namespace CodelessModBuilder.src
                     }
                     else
                     {
-                        unlockCard.Effects.AddRange(unlockEffectData.GetAllUnlockEffects(gameData));
+                        unlockCard.Effects.AddRange(unlockEffectData.GetAllUnlockEffects(gameData, Directory));
                     }
                 }
             }
@@ -442,6 +414,46 @@ namespace CodelessModBuilder.src
         }
     }
 
+    public abstract class JsonIEffectType<T1, T2> : JsonResource<T1>, IEffectTypeResource where T1 : EffectTypeData<T2> where T2 : IEffectType
+    {
+        public JsonIEffectType(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
+        {
+        }
+
+        public override void OnRegister(in GameData gameData, T1 effectTypeData)
+        {
+            if (effectTypeData.TryConvert(gameData, out T2 effectType) && Directory.AddEffectType(effectTypeData.Name, effectType))
+            {
+                Main.LogInfo($"Successfully registered {typeof(T2).Name} - {effectTypeData.Name}");
+            }
+        }
+    }
+
+    public class JsonCApplianceModifier : JsonIEffectType<CApplianceSpeedModifierEffectData, CApplianceSpeedModifier>
+    {
+        public override ResourceType Type => ResourceType.JsonCApplianceSpeedModifier;
+        public JsonCApplianceModifier(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory) { }
+    }
+
+    public class JsonCAppliesStatus : JsonIEffectType<CAppliesStatusEffectData, CAppliesStatus>
+    {
+        public override ResourceType Type => ResourceType.JsonCAppliesStatus;
+        public JsonCAppliesStatus(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory) { }
+    }
+
+    public class JsonCTableModifier : JsonIEffectType<CTableModifierEffectData, CTableModifier>
+    {
+        public override ResourceType Type => ResourceType.JsonCTableModifier;
+
+        public JsonCTableModifier(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory) { }
+    }
+
+    public class JsonCQueueModifier : JsonIEffectType<CQueueModifierEffectData, CQueueModifier>
+    {
+        public override ResourceType Type => ResourceType.JsonCQueueModifier;
+        public JsonCQueueModifier(string name, string data, in ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory) { }
+    }
+
     public sealed class ResourceDirectory
     {
         public Dictionary<ResourceType, HashSet<Resource>> Resources { get; private set; }
@@ -450,13 +462,22 @@ namespace CodelessModBuilder.src
 
         private readonly Dictionary<string, Localisation> _localisations;
 
+        private readonly Dictionary<string, IEffectType> _effectTypes;
+
         private readonly HashSet<IInitialisableGDOResource> _continuousInitialise;
 
-        public ResourceDirectory()
+        public readonly string ModGuid;
+        public readonly string ModName;
+
+        public ResourceDirectory(string modGuid, string modName)
         {
+            ModGuid = modGuid;
+            ModName = modName;
+
             Resources = new Dictionary<ResourceType, HashSet<Resource>>();
             _unlockEffectDatas = new Dictionary<string, UnlockEffectData>();
             _localisations = new Dictionary<string, Localisation>();
+            _effectTypes = new Dictionary<string, IEffectType>();
             _continuousInitialise = new HashSet<IInitialisableGDOResource>();
         }
 
@@ -472,6 +493,10 @@ namespace CodelessModBuilder.src
         };
         internal List<ResourceType> LateRegisterTypes => new List<ResourceType>()
         {
+            ResourceType.JsonCApplianceSpeedModifier,
+            ResourceType.JsonCAppliesStatus,
+            ResourceType.JsonCTableModifier,
+            ResourceType.JsonCQueueModifier,
             ResourceType.JsonUnlockEffect
         };
 
@@ -520,33 +545,54 @@ namespace CodelessModBuilder.src
             return true;
         }
 
-        public bool AddLocalisationItem(string name, Localisation localisationItem)
+        public bool AddLocalisationItem(string name, Localisation localisation)
         {
             if (_localisations.ContainsKey(name))
             {
-                Main.LogWarning($"ResourceDirectory already contains localisation {name}.");
+                Main.LogWarning($"ResourceDirectory already contains Localisation {name}.");
                 return false;
             }
-            _localisations.Add(name, localisationItem);
+            _localisations.Add(name, localisation);
             return true;
         }
 
-        public bool TryGetLocalisationItem<T>(string name, out T localisationItem) where T : Localisation
+        public bool TryGetLocalisationItem<T>(string name, out T localisation) where T : Localisation
         {
+            localisation = null;
             if (!_localisations.TryGetValue(name, out Localisation obj))
             {
                 Main.LogError($"ResourceDirectory does not contain {typeof(T).Name} {name}.");
-                localisationItem = null;
                 return false;
             }
 
             if (!(obj is T))
             {
                 Main.LogError($"Localisation {name} does not match type {typeof(T).Name}.");
-                localisationItem = null;
                 return false;
             }
-            localisationItem = obj as T;
+            localisation = obj as T;
+            return true;
+        }
+
+        public bool AddEffectType(string name, IEffectType effectType)
+        {
+            if (_effectTypes.ContainsKey(name))
+            {
+                Main.LogWarning($"ResourceDirectory already contains EffectType {name}.");
+                return false;
+            }
+            _effectTypes.Add(name, effectType);
+            return true;
+        }
+
+        public bool TryGetEffectType(string name, out IEffectType effectType)
+        {
+            if (!_effectTypes.TryGetValue(name, out effectType))
+            {
+                Main.LogError($"ResourceDirectory does not contain EffectType {name}.");
+                effectType = default;
+                return false;
+            }
             return true;
         }
 

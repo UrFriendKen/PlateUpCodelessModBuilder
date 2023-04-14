@@ -7,7 +7,8 @@
   
   "FranchiseIncreasedBaseDishCount": 2,
 
-
+  "GlobalEffectCondition": "Always",
+  "GlobalEffectTypeName": "CMB_CTableModifierExample",
 
   "CustomersPerHour": 1.0,
   "CustomersPerHourIncrease": 2.0,
@@ -26,5 +27,10 @@
   
   "StartingApplianceName": "Supply Cabinet",
   "StartingMoney": 500,
+
+  "RestaurantStatusToApply": "HalloweenTrickConstantMess",
+
+  "AddsTheme": "Formal",
+
   "Name": "CMB_ExampleUnlockEffect"
 }

@@ -37,7 +37,11 @@ namespace CodelessModBuilder.src
             { "decors", ResourceType.JsonDecor },
             { "unlockeffect", ResourceType.JsonUnlockEffect },
             { "unlockcard", ResourceType.JsonUnlockCard },
-            { "unlockinfo", ResourceType.JsonUnlockInfo }
+            { "unlockinfo", ResourceType.JsonUnlockInfo },
+            { "cappliancespeedmodifier", ResourceType.JsonCApplianceSpeedModifier },
+            { "cappliesstatus", ResourceType.JsonCAppliesStatus },
+            { "ctablemodifier", ResourceType.JsonCTableModifier },
+            { "cqueuemodifier", ResourceType.JsonCQueueModifier }
         };
 
         public static readonly HashSet<string> ALLOWED_FILE_EXTENSIONS = new HashSet<string>()
@@ -102,7 +106,7 @@ namespace CodelessModBuilder.src
 
             var assembly = Assembly.GetExecutingAssembly();
 
-            resourceDirectory = new ResourceDirectory();
+            resourceDirectory = new ResourceDirectory(ModID, ModName);
 
             foreach (var resourceName in assembly.GetManifestResourceNames())
             {
@@ -178,10 +182,10 @@ namespace CodelessModBuilder.src
                         switch (resourceType)
                         {
                             case ResourceType.JsonMaterial:
-                                resourceDirectory.Add(new JsonMaterial(filename, text));
+                                resourceDirectory.Add(new JsonMaterial(filename, text, resourceDirectory));
                                 break;
                             case ResourceType.JsonDecor:
-                                resourceDirectory.Add(new JsonDecor(filename, text));
+                                resourceDirectory.Add(new JsonDecor(filename, text, resourceDirectory));
                                 break;
                             case ResourceType.JsonUnlockInfo:
                                 resourceDirectory.Add(new JsonUnlocKInfo(filename, text, resourceDirectory));
@@ -191,6 +195,18 @@ namespace CodelessModBuilder.src
                                 break;
                             case ResourceType.JsonUnlockCard:
                                 resourceDirectory.Add(new JsonUnlockCard(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonCApplianceSpeedModifier:
+                                resourceDirectory.Add(new JsonCApplianceModifier(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonCAppliesStatus:
+                                resourceDirectory.Add(new JsonCAppliesStatus(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonCTableModifier:
+                                resourceDirectory.Add(new JsonCTableModifier(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonCQueueModifier:
+                                resourceDirectory.Add(new JsonCQueueModifier(filename, text, resourceDirectory));
                                 break;
                             case ResourceType.Unknown:
                             default:

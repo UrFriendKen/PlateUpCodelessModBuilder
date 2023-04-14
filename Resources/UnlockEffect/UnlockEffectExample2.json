@@ -1,9 +1,0 @@
-{
-  "CustomerSpawnBaseMultiplier": 1.0,
-  "CustomerSpawnPerDayMultiplier": 1.0,
-  
-  "CustomerTypeProbability": 0.1,
-  "EnableCustomerTypeName": "Generic Customer",
-
-  "Name": "CMB_ExampleUnlockEffect2"
-}

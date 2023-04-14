@@ -11,7 +11,7 @@ namespace ModName.src.Customs
         public string Locale;
     }
 
-    public abstract class LocalisationData<T> : BaseLocalisationData
+    public abstract class LocalisationData<T> : BaseLocalisationData where T : Localisation
     {
         public abstract bool TryConvert(out T localisation);
     }
