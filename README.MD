@@ -57,7 +57,7 @@ Resources
         - Material2.json
 
     --- Wallpaper
-        --- Decors
+        --- Decor
             - Wallpaper1.json
         --- KLMaterial
             - Material3.json
