@@ -1,0 +1,22 @@
+# DecorationBonus
+
+* None
+* ExtraSides
+* FewerSides
+* QueuePatienceIncrease
+* MoneyPerDelivery
+* InfinitePatienceIfQueue
+* WaitTimeDecrease
+* ConsumableReuseChance
+* DestroyTableWhenLeave
+* IncreasedServicePatience
+* BonusPatienceNearby
+* ResetPatienceAbility
+* DecreasedOrderPatience
+* IncreasedOrderChangeChance
+* IncreasedMess
+* DecreasedMess
+* IncreasedDeliveryPatience
+* PreventMess
+* InformalService
+* SeatWithoutClear

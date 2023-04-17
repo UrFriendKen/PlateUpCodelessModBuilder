@@ -36,12 +36,12 @@ Here are two equally valid example folder structures:
 ```text
 Resources
     
-    --- Materials
+    --- KLMaterial
         - Material1.json
         - Material2.json
         - Material3.json
 
-    --- Decors
+    --- Decor
         - Wallpaper1.json
         - Floor1.json
         - Floor2.json
@@ -52,18 +52,18 @@ Resources
 ```text
 Resources
     
-    --- Materials
+    --- KLMaterial
         - Material1.json
         - Material2.json
 
     --- Wallpaper
         --- Decors
             - Wallpaper1.json
-        --- Materials
+        --- KLMaterial
             - Material3.json
 
     --- Flooring
-        --- Decors
+        --- Decor
             - Floor1.json
             - Floor2.json
     

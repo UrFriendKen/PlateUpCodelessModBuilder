@@ -12,4 +12,4 @@ Folder Name: `CAppliesStatus`
 ## BonusStatus
 
 * DecorationBonus to apply
-* See `DecorationBonus.txt`
+* See `DecorationBonusValues.md`

@@ -1,9 +1,9 @@
-﻿using ModName.src.Customs;
-using KitchenData;
+﻿using KitchenData;
 using KitchenLib;
 using KitchenLib.Event;
 using KitchenLib.Utils;
 using KitchenMods;
+using ModName.src.Customs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -98,6 +98,9 @@ namespace ModName.src
 
         protected override void OnPostActivate(Mod mod)
         {
+            if (AssemblyName.ToLower() == "modname")
+                LogError("RENAME \"ModName.csproj\"!");
+
             LogWarning($"{ModID} v{ModVersion} in use!");
 
             var assembly = Assembly.GetExecutingAssembly();
@@ -120,12 +123,7 @@ namespace ModName.src
                     LogInfo($"{resourceName} (Skipped)");
                     continue;
                 }
-
                 LogInfo(resourceName);
-                if (resourceName.StartsWith("CMB_"))
-                {
-                    LogWarning("Please rename your resources to something uniquely identifiable to the mod!");
-                }
 
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
                 {

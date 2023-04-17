@@ -1,8 +1,0 @@
-public enum UnlockGroup
-{
-	Generic = 0,
-	Dish = 1,
-	PrimaryTheme = 3,
-	SecondaryTheme = 4,
-	Special = 6
-}

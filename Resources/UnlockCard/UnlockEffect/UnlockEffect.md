@@ -125,7 +125,7 @@ Provide free appliance and/or starting money at the start of future franchise ti
 Applies `RestaurantStatus`
 
 * RestaurantStatusToApply
-  * See `RestaurantStatusValues.txt`
+  * See `RestaurantStatusValues.md`
 
 ### ThemeAddEffect
 

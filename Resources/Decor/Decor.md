@@ -23,7 +23,7 @@ Set to `True` if using a custom material (Material must be defined either in thi
 
 * Can also use base game material name
 
-* See `References\BaseGameMaterials.txt` for available base game materials (May not be up to date)
+* See `References\BaseGameMaterials.md` for available base game materials (May not be up to date)
 
 ### DecorType (string)
 

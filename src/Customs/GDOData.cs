@@ -17,7 +17,14 @@ namespace ModName.src.Customs
             return StringUtils.GetInt32HashCode($"{modID}:{Name}");
         }
 
-        public abstract bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out T gdo);
+        public bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out T gdo)
+        {
+            if (Name.ToLower().StartsWith("cmb_"))
+                Main.LogWarning("Please rename your resources so it is uniquely identifiable to your mod to prevent conflicts!");
+            return OnTryConvert(gameData, resourceDirectory, out gdo);
+        }
+
+        protected abstract bool OnTryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out T gdo);
     }
 
     public class DecorData : GDOData<Decor>
@@ -27,7 +34,7 @@ namespace ModName.src.Customs
         public string DecorType;
         public bool IsAvailable = true;
 
-        public override bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out Decor decor)
+        protected override bool OnTryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out Decor decor)
         {
             Material material = null;
             decor = null;
@@ -103,7 +110,7 @@ namespace ModName.src.Customs
         public List<string> UnlockEffectNames;
         public List<string> UnlockInfoNames;
 
-        public override bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out UnlockCard unlockCard)
+        protected override bool OnTryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out UnlockCard unlockCard)
         {
             unlockCard = null;
             if (!ValidationUtils.EnumTryParse(UnlockGroup, out UnlockGroup unlockGroup))
