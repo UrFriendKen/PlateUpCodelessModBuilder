@@ -1,6 +1,6 @@
 # PLATEUP CODELESS MOD BUILDER
 
-The goal of this project is to allow creating and registering standard PlateUp Objects without writing any C# code. You can each out to me (IcedMilo) on the [Unofficial PlateUp Modding Discord](https://discord.gg/4BXYsWNUBb) if you encounter issues.
+The goal of this project is to allow creating and registering standard PlateUp Objects without writing any C# code. You can reach out to me (IcedMilo) on the [Unofficial PlateUp Modding Discord](https://discord.gg/4BXYsWNUBb) if you encounter issues.
 
 ## Requirements
 
