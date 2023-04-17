@@ -1,11 +1,8 @@
-﻿using CodelessModBuilder.src.Customs;
-using CodelessModInterop;
+﻿using CodelessModInterop;
 using Kitchen;
 using KitchenData;
 using KitchenLib;
 using KitchenLib.Customs;
-using KitchenLib.References;
-using KitchenLib.Utils;
 using ModName.src.Customs;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,12 +10,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace CodelessModBuilder.src
+namespace ModName.src
 {
     public enum ResourceType
     {
         Unknown,
-        JsonMaterial,
+        JsonKLMaterial,
+        JsonPatienceValues,
+        JsonOrderingValues,
         JsonUnlockInfo,
         JsonDecor,
         JsonUnlockCard,
@@ -108,10 +107,10 @@ namespace CodelessModBuilder.src
         }
     }
 
-    public class JsonMaterial : JsonResource<Material>
+    public class JsonKLMaterial : JsonResource<Material>
     {
-        public override ResourceType Type => ResourceType.JsonMaterial;
-        public JsonMaterial(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
+        public override ResourceType Type => ResourceType.JsonKLMaterial;
+        public JsonKLMaterial(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
         {
         }
 
@@ -123,7 +122,7 @@ namespace CodelessModBuilder.src
                 return;
             }
             CustomMaterials.CustomMaterialsIndex.Add(material.name, material);
-            ModdedResourceRegistry.RegisterModdedMaterial(material);
+            Directory.AddMaterial(material);
             Main.LogInfo($"Successfully registered Material - {material.name}");
         }
 
@@ -142,7 +141,7 @@ namespace CodelessModBuilder.src
             }
             catch (Exception ex)
             {
-                Main.LogWarning("Could not load JsonMaterial.");
+                Main.LogWarning("Could not load JsonKLMaterial.");
                 Main.LogWarning(ex.Message);
             }
             if (baseJson != null)
@@ -171,45 +170,45 @@ namespace CodelessModBuilder.src
         {
         }
 
-        public override void OnRegister(in GameData gameData, DecorData obj)
+        public override void OnRegister(in GameData gameData, DecorData decorData)
         {
-            Material material = obj.UseCustomMaterial ? GetCustomMaterial(obj.MaterialName) : MaterialUtils.GetExistingMaterial(obj.MaterialName);
-            if (material == null)
-            {
-                Main.LogWarning($"Failed to get material - {obj.MaterialName}.");
+            if (!decorData.TryConvert(gameData, Directory, out Decor decor))
                 return;
-            }
 
-            if (!gameData.TryGet(obj.Type == LayoutMaterialType.Wallpaper ? ApplianceReferences.WallpaperApplicator : ApplianceReferences.FlooringApplicator, out Appliance applicatorAppliance))
-            {
-                Main.LogWarning($"Failed to get applicator appliance.");
-                return;
-            }
+            gameData.Objects.Add(decor.ID, decor);
+            Directory.AddDecor(decor);
+            Main.LogInfo($"Successfully registered {decorData.Name} ({decor.ID})");
+        }
+    }
 
-            string decorName = $"{obj.Type} - {obj.Name}";
-            int id = StringUtils.GetInt32HashCode(decorName);
-
-            Decor decor = ScriptableObject.CreateInstance<Decor>();
-            decor.name = decorName;
-            decor.ID = id;
-            decor.Material = material;
-            decor.Type = obj.Type;
-            decor.ApplicatorAppliance = applicatorAppliance;
-            decor.IsAvailable = obj.IsAvailable;
-
-            gameData.Objects.Add(id, decor);
-            ModdedResourceRegistry.RegisterModdedGDO(Directory.ModName, decor);
-            Main.LogInfo($"Successfully registered {obj.Name} ({id})");
+    public abstract class JsonStructData<TStructData, TStruct> : JsonResource<TStructData> where TStructData : StructData<TStruct> where TStruct : struct
+    {
+        protected JsonStructData(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
+        {
         }
 
-        private Material GetCustomMaterial(string materialName)
+        public override void OnRegister(in GameData gameData, TStructData structData)
         {
-            try
+            if (Directory.AddStructData(structData))
             {
-                return MaterialUtils.GetCustomMaterial(materialName);
+                Main.LogInfo($"Successfully registered {typeof(TStruct).Name} - {structData.Name}");
             }
-            catch { }
-            return null;
+        }
+    }
+
+    public class JsonPatienceValues : JsonStructData<PatienceValuesData, PatienceValues>
+    {
+        public override ResourceType Type => ResourceType.JsonPatienceValues;
+        public JsonPatienceValues(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
+        {
+        }
+    }
+
+    public class JsonOrderingValues : JsonStructData<OrderingValuesData, OrderingValues>
+    {
+        public override ResourceType Type => ResourceType.JsonOrderingValues;
+        public JsonOrderingValues(string name, string data, ResourceDirectory resourceDirectory) : base(name, data, resourceDirectory)
+        {
         }
     }
 
@@ -221,11 +220,11 @@ namespace CodelessModBuilder.src
         {
         }
 
-        public override void OnRegister(in GameData gameData, UnlockInfoData obj)
+        public override void OnRegister(in GameData gameData, UnlockInfoData unlockInfoData)
         {
-            if (obj.TryConvert(out UnlockInfo unlockInfo) && Directory.AddLocalisationItem(obj.Name, unlockInfo))
+            if (unlockInfoData.TryConvert(out UnlockInfo unlockInfo) && Directory.AddLocalisationItem(unlockInfoData.Name, unlockInfo))
             {
-                Main.LogInfo($"Successfully registered Localisation - {obj.Name}");
+                Main.LogInfo($"Successfully registered Localisation - {unlockInfoData.Name}");
             }
         }
     }
@@ -238,11 +237,11 @@ namespace CodelessModBuilder.src
         {
         }
 
-        public override void OnRegister(in GameData gameData, UnlockEffectData obj)
+        public override void OnRegister(in GameData gameData, UnlockEffectData unlockEffectData)
         {
-            if (Directory.AddUnlockEffectData(obj.Name, obj))
+            if (Directory.AddUnlockEffects(unlockEffectData.Name, unlockEffectData.GetAllUnlockEffects(gameData, Directory)))
             {
-                Main.LogInfo($"Successfully registered UnlockEffect - {obj.Name}");
+                Main.LogInfo($"Successfully registered UnlockEffect - {unlockEffectData.Name}");
             }
         }
     }
@@ -267,70 +266,22 @@ namespace CodelessModBuilder.src
         {
         }
 
-        public override void OnRegister(in GameData gameData, UnlockCardData obj)
+        public override void OnRegister(in GameData gameData, UnlockCardData unlockCardData)
         {
+            if (!unlockCardData.TryConvert(gameData, Directory, out UnlockCard unlockCard))
+                return;
+
             WasInitialised = false;
-            if (!Enum.TryParse(obj.UnlockGroup, ignoreCase: true, out UnlockGroup unlockGroup))
-            {
-                Main.LogWarning($"Failed to parse UnlockGroup.");
-                return;
-            }
 
-            if (!Enum.TryParse(obj.CardType, ignoreCase: true, out CardType cardType))
-            {
-                Main.LogWarning($"Failed to parse CardType.");
-                return;
-            }
+            unlockId = unlockCard.ID;
+            unlockCardName = unlockCard.name;
+            unlockEffectNames = unlockCardData.UnlockEffectNames;
+            requiredUnlockNames = unlockCardData.RequiredCards?? new List<string>();
+            blockedByUnlockNames = unlockCardData.BlockedByCards ?? new List<string>();
 
-            if (!Enum.TryParse(obj.ExpRewardLevel, ignoreCase: true, out Unlock.RewardLevel expReward))
-            {
-                Main.LogWarning($"Failed to parse ExpRewardLevel.");
-                return;
-            }
-
-            if (!Enum.TryParse(obj.CustomerMultiplierLevel, ignoreCase: true, out DishCustomerChange customerChange))
-            {
-                Main.LogWarning($"Failed to parse CustomerMultiplierLevel.");
-                return;
-            }
-
-            LocalisationObject<UnlockInfo> info = new LocalisationObject<UnlockInfo>();
-            foreach (string localisationName in obj.UnlockInfoNames)
-            {
-                if (!Directory.TryGetLocalisationItem(localisationName, out UnlockInfo unlockInfo))
-                {
-                    continue;
-                }
-                info.Add(unlockInfo.Locale, unlockInfo);
-            }
-
-            int id = StringUtils.GetInt32HashCode(obj.Name);
-
-            UnlockCard unlockCard = ScriptableObject.CreateInstance<UnlockCard>();
-            unlockCard.ID = id;
-            unlockId = id;
-            unlockCard.name = obj.Name;
-            unlockCardName = obj.Name;
-            unlockCard.ExpReward = expReward;
-            unlockCard.IsUnlockable = obj.IsUnlockable;
-            unlockCard.UnlockGroup = unlockGroup;
-            unlockCard.CardType = cardType;
-            unlockCard.MinimumFranchiseTier = obj.MinimumFranchiseTier;
-            unlockCard.IsSpecificFranchiseTier = obj.IsExactFranchiseTier;
-            unlockCard.CustomerMultiplier = customerChange;
-            unlockCard.SelectionBias = obj.SelectionBias;
-            unlockCard.Info = info;
-            unlockCard.Localisation = info.Get(Localisation.CurrentLocale);
-            unlockCard.Effects = new List<UnlockEffect>();
-            unlockEffectNames = obj.UnlockEffectNames;
-            unlockCard.Requires = new List<Unlock>();
-            requiredUnlockNames = obj.RequiredCards?? new List<string>();
-            unlockCard.BlockedBy = new List<Unlock>();
-            blockedByUnlockNames = obj.BlockedByCards ?? new List<string>();
-
-            gameData.Objects.Add(id, unlockCard);
-            ModdedResourceRegistry.RegisterModdedGDO(Directory.ModName, unlockCard);
-            Main.LogInfo($"Successfully registered {obj.Name} ({id})");
+            gameData.Objects.Add(unlockCard.ID, unlockCard);
+            Directory.AddUnlockCard(unlockCard);
+            Main.LogInfo($"Successfully registered {unlockCardData.Name} ({unlockCard.ID})");
         }
 
         protected override bool LoadObjectFromJSON(JObject jsonObject, out UnlockCardData unlockCardData)
@@ -371,13 +322,13 @@ namespace CodelessModBuilder.src
                 Main.LogInfo($"Updating {unlockCardName} Effects...");
                 foreach (string unlockEffectName in unlockEffectNames)
                 {
-                    if (!Directory.TryGetUnlockEffectData(unlockEffectName, out UnlockEffectData unlockEffectData))
+                    if (!Directory.TryGetUnlockEffects(unlockEffectName, out IEnumerable<UnlockEffect> unlockEffects))
                     {
                         Main.LogWarning($"Failed to get UnlockEffect - {unlockEffectName}.");
                     }
                     else
                     {
-                        unlockCard.Effects.AddRange(unlockEffectData.GetAllUnlockEffects(gameData, Directory));
+                        unlockCard.Effects.AddRange(unlockEffects);
                     }
                 }
             }
@@ -422,7 +373,7 @@ namespace CodelessModBuilder.src
 
         public override void OnRegister(in GameData gameData, T1 effectTypeData)
         {
-            if (effectTypeData.TryConvert(gameData, out T2 effectType) && Directory.AddEffectType(effectTypeData.Name, effectType))
+            if (effectTypeData.TryConvert(gameData, Directory, out T2 effectType) && Directory.AddEffectType(effectTypeData.Name, effectType))
             {
                 Main.LogInfo($"Successfully registered {typeof(T2).Name} - {effectTypeData.Name}");
             }
@@ -458,13 +409,9 @@ namespace CodelessModBuilder.src
     {
         public Dictionary<ResourceType, HashSet<Resource>> Resources { get; private set; }
 
-        private readonly Dictionary<string, UnlockEffectData> _unlockEffectDatas;
-
-        private readonly Dictionary<string, Localisation> _localisations;
-
-        private readonly Dictionary<string, IEffectType> _effectTypes;
-
         private readonly HashSet<IInitialisableGDOResource> _continuousInitialise;
+
+        private readonly StructDataDictionary _structDatas = new StructDataDictionary();  
 
         public readonly string ModGuid;
         public readonly string ModName;
@@ -475,15 +422,14 @@ namespace CodelessModBuilder.src
             ModName = modName;
 
             Resources = new Dictionary<ResourceType, HashSet<Resource>>();
-            _unlockEffectDatas = new Dictionary<string, UnlockEffectData>();
-            _localisations = new Dictionary<string, Localisation>();
-            _effectTypes = new Dictionary<string, IEffectType>();
             _continuousInitialise = new HashSet<IInitialisableGDOResource>();
         }
 
         internal List<ResourceType> EarlyRegisterTypes => new List<ResourceType>()
         {
-            ResourceType.JsonMaterial,
+            ResourceType.JsonKLMaterial,
+            ResourceType.JsonPatienceValues,
+            ResourceType.JsonOrderingValues,
             ResourceType.JsonUnlockInfo
         };
         internal List<ResourceType> NormalRegisterTypes => new List<ResourceType>()
@@ -523,77 +469,85 @@ namespace CodelessModBuilder.src
             return resourcesOfType;
         }
 
-        public bool AddUnlockEffectData(string name, UnlockEffectData unlockEffectData)
+        public bool TryGetStructData<T>(string name, out T baseStructData) where T : BaseStructData
         {
-            if (_unlockEffectDatas.ContainsKey(name))
+            return _structDatas.TryGetValue(name, out baseStructData);
+        }
+
+        public bool TryGetConvertedStruct<T>(string name, out T convertedStruct) where T : struct
+        {
+            return _structDatas.TryGetConvertedValue(name, out convertedStruct);
+        }
+
+        public bool AddStructData(BaseStructData baseStructData)
+        {
+            if (_structDatas.ContainsKey(baseStructData.Name))
             {
-                Main.LogWarning($"ResourceDirectory already contains UnlockEffectData {name}.");
+                Type registeredType = _structDatas[baseStructData.Name].StructType;
+                bool sameType = baseStructData.StructType.Name == registeredType.Name;
+                if (sameType)
+                {
+                    Main.LogWarning($"{baseStructData.StructType.Name} with Name {baseStructData.Name} already registered.");
+                }
+                else
+                {
+                    Main.LogWarning($"{baseStructData.StructType.Name} with Name {baseStructData.Name} has the same name as already registered {registeredType.Name}.");
+                }
                 return false;
             }
-            _unlockEffectDatas.Add(name, unlockEffectData);
+            _structDatas.Add(baseStructData.Name, baseStructData);
             return true;
         }
 
-        public bool TryGetUnlockEffectData(string name, out UnlockEffectData unlockEffectData)
+        public bool AddMaterial(Material material)
         {
-            if (!_unlockEffectDatas.TryGetValue(name, out unlockEffectData))
-            {
-                Main.LogError($"ResourceDirectory does not contain UnlockEffectData {name}.");
-                unlockEffectData = null;
-                return false;
-            }
-            return true;
+            return ModdedResourceRegistry.RegisterModdedMaterial(material);
+        }
+
+        public bool AddUnlockEffects(string name, IEnumerable<UnlockEffect> unlockEffects)
+        {
+            return ModdedResourceRegistry.RegisterModdedUnlockEffectSet(name, unlockEffects);
+        }
+
+        public bool TryGetUnlockEffects(string name, out IEnumerable<UnlockEffect> unlockEffects)
+        {
+            return ModdedResourceRegistry.TryGetModdedUnlockEffectSet(name, out unlockEffects);
         }
 
         public bool AddLocalisationItem(string name, Localisation localisation)
         {
-            if (_localisations.ContainsKey(name))
-            {
-                Main.LogWarning($"ResourceDirectory already contains Localisation {name}.");
-                return false;
-            }
-            _localisations.Add(name, localisation);
-            return true;
+            return ModdedResourceRegistry.RegisterModdedLocalisation(name, localisation);
         }
 
         public bool TryGetLocalisationItem<T>(string name, out T localisation) where T : Localisation
         {
             localisation = null;
-            if (!_localisations.TryGetValue(name, out Localisation obj))
+            if (!ModdedResourceRegistry.TryGetModdedLocalisation(name, out Localisation loc))
             {
-                Main.LogError($"ResourceDirectory does not contain {typeof(T).Name} {name}.");
                 return false;
             }
-
-            if (!(obj is T))
-            {
-                Main.LogError($"Localisation {name} does not match type {typeof(T).Name}.");
-                return false;
-            }
-            localisation = obj as T;
+            localisation = loc as T;
             return true;
         }
 
         public bool AddEffectType(string name, IEffectType effectType)
         {
-            if (_effectTypes.ContainsKey(name))
-            {
-                Main.LogWarning($"ResourceDirectory already contains EffectType {name}.");
-                return false;
-            }
-            _effectTypes.Add(name, effectType);
-            return true;
+            return ModdedResourceRegistry.RegisterModdedEffectType(name, effectType);
         }
 
         public bool TryGetEffectType(string name, out IEffectType effectType)
         {
-            if (!_effectTypes.TryGetValue(name, out effectType))
-            {
-                Main.LogError($"ResourceDirectory does not contain EffectType {name}.");
-                effectType = default;
-                return false;
-            }
-            return true;
+            return ModdedResourceRegistry.TryGetModdedEffectType(name, out effectType);
+        }
+
+        public bool AddDecor(Decor decor)
+        {
+            return ModdedResourceRegistry.RegisterModdedGDO(ModGuid, decor);
+        }
+
+        public bool AddUnlockCard(UnlockCard unlockCard)
+        {
+            return ModdedResourceRegistry.RegisterModdedGDO(ModGuid, unlockCard);
         }
 
         public bool AddContinuousInitialise(IInitialisableGDOResource resource)
@@ -667,7 +621,6 @@ namespace CodelessModBuilder.src
                     }
                 }
             }
-            Main.LogInfo($"_continuousInitialise.Count = {_continuousInitialise.Count}");
         }
 
         private void PrivateContinuousInitialise(in GameData gameData)

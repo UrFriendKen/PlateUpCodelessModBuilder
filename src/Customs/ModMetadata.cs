@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CodelessModBuilder.src.Customs
+namespace ModName.src.Customs
 {
     public class ModMetadata
     {

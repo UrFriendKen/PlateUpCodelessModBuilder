@@ -1,4 +1,4 @@
-﻿using CodelessModBuilder.src.Customs;
+﻿using ModName.src.Customs;
 using KitchenData;
 using KitchenLib;
 using KitchenLib.Event;
@@ -13,7 +13,7 @@ using System.Reflection;
 using UnityEngine;
 
 // Namespace should have "Kitchen" in the beginning
-namespace CodelessModBuilder.src
+namespace ModName.src
 {
     public sealed class Main : BaseMod, IModSystem
     {
@@ -33,8 +33,10 @@ namespace CodelessModBuilder.src
         public string MetadataResourceName;
         public static readonly Dictionary<string, ResourceType> FOLDER_MAPPINGS = new Dictionary<string, ResourceType>()
         {
-            { "materials", ResourceType.JsonMaterial },
-            { "decors", ResourceType.JsonDecor },
+            { "klmaterial", ResourceType.JsonKLMaterial },
+            { "patiencevalues", ResourceType.JsonPatienceValues },
+            { "orderingvalues", ResourceType.JsonOrderingValues },
+            { "decor", ResourceType.JsonDecor },
             { "unlockeffect", ResourceType.JsonUnlockEffect },
             { "unlockcard", ResourceType.JsonUnlockCard },
             { "unlockinfo", ResourceType.JsonUnlockInfo },
@@ -57,12 +59,6 @@ namespace CodelessModBuilder.src
             MetadataResourceName = $"{AssemblyName}.Resources.metadata.json";
 
             var assembly = Assembly.GetExecutingAssembly();
-            string[] allResourceNames = assembly.GetManifestResourceNames();
-
-            foreach (var resourceName in allResourceNames)
-            {
-                LogInfo(resourceName);
-            }
             using (var stream = assembly.GetManifestResourceStream(MetadataResourceName))
             {
                 if (stream == null)
@@ -108,13 +104,28 @@ namespace CodelessModBuilder.src
 
             resourceDirectory = new ResourceDirectory(ModID, ModName);
 
-            foreach (var resourceName in assembly.GetManifestResourceNames())
+            string[] allResourceNames = assembly.GetManifestResourceNames();
+            Main.LogInfo($"Loading embedded resources with extensions: {String.Join(", ", ALLOWED_FILE_EXTENSIONS)}.");
+            foreach (var resourceName in allResourceNames)
             {
                 if (resourceName == MetadataResourceName)
                     continue;
 
                 if (!resourceName.StartsWith(AssemblyName))
                     continue;
+
+                string[] pathStructure = resourceName.Split('.');
+                if (!ALLOWED_FILE_EXTENSIONS.Contains(pathStructure.Last()))
+                {
+                    LogInfo($"{resourceName} (Skipped)");
+                    continue;
+                }
+
+                LogInfo(resourceName);
+                if (resourceName.StartsWith("CMB_"))
+                {
+                    LogWarning("Please rename your resources to something uniquely identifiable to the mod!");
+                }
 
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
                 {
@@ -126,8 +137,6 @@ namespace CodelessModBuilder.src
                     using (var reader = new StreamReader(stream))
                     {
                         var text = reader.ReadToEnd();
-                        string[] pathStructure = resourceName.Split('.');
-                        LogInfo(string.Join(".", pathStructure));
                         string filename = null;
                         string extension = null;
 
@@ -163,13 +172,7 @@ namespace CodelessModBuilder.src
 
                             if (i == pathStructure.Length - 1)
                             {
-                                if (!ALLOWED_FILE_EXTENSIONS.Contains(pathStructure.Last()))
-                                {
-                                    LogError($"Error parsing embedded resource! Invalid file extension. ({resourceName})");
-                                    break;
-                                }
                                 extension = itemLower;
-
                                 success = true;
                             }
                         }
@@ -181,8 +184,14 @@ namespace CodelessModBuilder.src
 
                         switch (resourceType)
                         {
-                            case ResourceType.JsonMaterial:
-                                resourceDirectory.Add(new JsonMaterial(filename, text, resourceDirectory));
+                            case ResourceType.JsonKLMaterial:
+                                resourceDirectory.Add(new JsonKLMaterial(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonPatienceValues:
+                                resourceDirectory.Add(new JsonPatienceValues(filename, text, resourceDirectory));
+                                break;
+                            case ResourceType.JsonOrderingValues:
+                                resourceDirectory.Add(new JsonOrderingValues(filename, text, resourceDirectory));
                                 break;
                             case ResourceType.JsonDecor:
                                 resourceDirectory.Add(new JsonDecor(filename, text, resourceDirectory));

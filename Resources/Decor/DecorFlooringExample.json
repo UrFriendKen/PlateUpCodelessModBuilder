@@ -1,0 +1,7 @@
+{
+  "Name": "CMB_DecorFlooringExample",
+  "UseCustomMaterial": true,
+  "MaterialName": "KLStonePavement",
+  "DecorType": "Floor",
+  "IsAvailable": true
+}

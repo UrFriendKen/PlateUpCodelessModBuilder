@@ -1,11 +1,10 @@
-﻿using KitchenLib.Customs;
-using KitchenLib;
+﻿using KitchenLib;
+using KitchenLib.Customs;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
-using System.IO;
 
-namespace CodelessModBuilder.src.Utils
+namespace ModName.src.Utils
 {
     internal class JSONMaterialUtil
     {
@@ -16,7 +15,7 @@ namespace CodelessModBuilder.src.Utils
             try
             {
                 JObject jObject = JObject.Parse(json);
-                if (jObject.TryGetValue("Type", out var value))
+                if (jObject.TryGetValue("DecorType", out var value))
                 {
                     JsonType key = value.ToObject<JsonType>();
                     object obj = jObject.ToObject(JSONManager.keyValuePairs[key]);

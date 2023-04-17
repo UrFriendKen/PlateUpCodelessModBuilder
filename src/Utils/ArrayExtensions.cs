@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CodelessModBuilder.src.Utils
+namespace ModName.src.Utils
 {
     public static class ArrayExtensions
     {

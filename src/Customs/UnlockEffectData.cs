@@ -1,5 +1,4 @@
-﻿using CodelessModBuilder.src;
-using Kitchen;
+﻿using Kitchen;
 using KitchenData;
 using KitchenLib.Utils;
 using ModName.src.Utils;
@@ -22,7 +21,7 @@ namespace ModName.src.Customs
         public bool IsEnableGroupEffect => CustomerTypeProbability != 0f || !EnableCustomerTypeName.IsNullOrEmpty();
         public bool IsFranchiseEffect => FranchiseIncreasedBaseDishCount != 0;
         public bool IsGlobalEffect => !GlobalEffectCondition.IsNullOrEmpty() || !GlobalEffectTypeName.IsNullOrEmpty();
-        public bool IsParameterEffect => CustomersPerHour != 0f || CustomersPerHourIncrease != 0f || MinGroupSizeChange != 0 || MaxGroupSizeChange != 0;
+        public bool IsParameterEffect => CustomersPerHour != 0f || CustomersPerHourCardEffect != 0f || MinGroupSizeChange != 0 || MaxGroupSizeChange != 0;
         public bool IsShopEffect =>
             !AddStapleApplianceName.IsNullOrEmpty() || ExtraBlueprintDeskSpawns != 0 || ExtraShopBlueprints != 0 || ShopCostDecrease != 0f || RandomiseShopPrices ||
             ExtraRandomStartingBlueprints != 0 || BlueprintRebuyableChance != 0f || BlueprintRefreshChance != 0f || UpgradedShopChance != 0f;
@@ -53,7 +52,7 @@ namespace ModName.src.Customs
 
         #region ParameterEffect
         public float CustomersPerHour;
-        public float CustomersPerHourIncrease;
+        public float CustomersPerHourCardEffect;
         public int MinGroupSizeChange;
         public int MaxGroupSizeChange;
         #endregion
@@ -146,16 +145,16 @@ namespace ModName.src.Customs
             if (EnableCustomerTypeName.IsNullOrEmpty())
                 return null;
 
-            if (!gameData.TryGetExistingGDOByName(EnableCustomerTypeName, out CustomerType customerType))
+            if (!GameDataUtils.TryGetExistingGDOByName(gameData, EnableCustomerTypeName, out CustomerType customerType))
             {
                 
                 Main.LogError($"Failed to find CustomerType with name {EnableCustomerTypeName}");
                 return null;
             }
 
-            if (CustomerTypeProbability < 0f)
+            if (CustomerTypeProbability < 0f || CustomerTypeProbability > 1f)
             {
-                Main.LogError("CustomerTypeProbability must not be negative!");
+                Main.LogError("CustomerTypeProbability must be between 0 and 1.0");
                 return null;
             }
 
@@ -168,9 +167,8 @@ namespace ModName.src.Customs
 
         private FranchiseEffect GetFranchiseEffect()
         {
-            if (FranchiseIncreasedBaseDishCount < 0)
+            if (!ValidationUtils.IsNonNegative(FranchiseIncreasedBaseDishCount, "FranchiseIncreasedBaseDishCount"))
             {
-                Main.LogError("FranchiseBaseDishCount must not be negative!");
                 return null;
             }
 
@@ -242,7 +240,7 @@ namespace ModName.src.Customs
                 Parameters = new KitchenParameters
                 {
                     CustomersPerHour = CustomersPerHour,
-                    CustomersPerHourReduction = -CustomersPerHourIncrease,
+                    CustomersPerHourReduction = CustomersPerHourCardEffect,
                     MinimumGroupSize = MinGroupSizeChange,
                     MaximumGroupSize = MaxGroupSizeChange
                 }
@@ -256,10 +254,22 @@ namespace ModName.src.Customs
             {
                 addStaple = null;
             }
-            else if (!gameData.TryGetExistingGDOByName(AddStapleApplianceName, out addStaple))
+            else if (!GameDataUtils.TryGetExistingGDOByName(gameData, AddStapleApplianceName, out addStaple))
             {
-                Main.LogError($"Failed to find CustomerType with name {EnableCustomerTypeName}");
-                addStaple = null;
+                return null;
+            }
+            
+            if (ShopCostDecrease > 1f)
+            {
+                Main.LogError($"ShopCostDecrease cannot be greater than 1.0");
+                return null;
+            }
+
+            if (!ValidationUtils.IsNonNegative(BlueprintRebuyableChance, "BlueprintRebuyableChance") ||
+                !ValidationUtils.IsNonNegative(BlueprintRefreshChance, "BlueprintRefreshChance") ||
+                !ValidationUtils.IsNonNegative(UpgradedShopChance, "UpgradedShopChance"))
+            {
+                return null;
             }
 
             return new ShopEffect()
@@ -283,15 +293,14 @@ namespace ModName.src.Customs
             {
                 startingAppliance = null;
             }
-            else if (!gameData.TryGetExistingGDOByName(StartingApplianceName, out startingAppliance))
+            else if (!GameDataUtils.TryGetExistingGDOByName(gameData, StartingApplianceName, out startingAppliance))
             {
                 Main.LogError($"Failed to find CustomerType with name {EnableCustomerTypeName}");
                 startingAppliance = null;
             }
 
-            if (StartingMoney < 0)
+            if (!ValidationUtils.IsNonNegative(StartingMoney, "StartingMoney"))
             {
-                Main.LogError("StartingMoney must not be negative!");
                 return null;
             }
 

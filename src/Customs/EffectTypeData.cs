@@ -1,6 +1,6 @@
-﻿using CodelessModBuilder.src;
-using Kitchen;
+﻿using Kitchen;
 using KitchenData;
+using KitchenLib.Utils;
 using ModName.src.Utils;
 using System;
 
@@ -10,7 +10,7 @@ namespace ModName.src.Customs
     {
         public string Name;
 
-        public abstract bool TryConvert(in GameData gameData, out T effectType);
+        public abstract bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out T effectType);
     }
 
     public class CApplianceSpeedModifierEffectData : EffectTypeData<CApplianceSpeedModifier>
@@ -20,24 +20,42 @@ namespace ModName.src.Customs
         public float ProcessSpeed;
         public float BadProcessSpeed;
 
-        public override bool TryConvert(in GameData gameData, out CApplianceSpeedModifier effectType)
+        public override bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out CApplianceSpeedModifier effectType)
         {
             effectType = default;
-            if (!ValidationUtils.IsNonNegative(ProcessSpeed, "ProcessSpeed") ||
-                !ValidationUtils.IsNonNegative(BadProcessSpeed, "BadProcessSpeed"))
+
+            int processId = 0;
+            if (!AffectedProcess.IsNullOrEmpty())
             {
+                if (!GameDataUtils.TryGetExistingGDOByName(gameData, AffectedProcess, out Process process))
+                {
+                    Main.LogError($"Failed to find Process with name {AffectedProcess}");
+                    return false;
+                }
+                processId = process.ID;
+            }
+            else if (!AffectsAllProcesses)
+            {
+                Main.LogError($"AffectedProcess cannot be empty, unless AffectsAllProcesses is set to True.");
                 return false;
             }
-            if (!GameDataUtils.TryGetExistingGDOByName(gameData, AffectedProcess, out Process process))
+
+            if (ProcessSpeed <= -1f)
             {
-                Main.LogError($"Failed to find Process with name {AffectedProcess}");
+                Main.LogError("ProcessSpeed must be greater than -1.0");
+                return false;
+            }
+
+            if (BadProcessSpeed <= -1f)
+            {
+                Main.LogError("ProcessSpeed must be greater than -1.0");
                 return false;
             }
 
             effectType = new CApplianceSpeedModifier()
             {
                 AffectsAllProcesses = AffectsAllProcesses,
-                Process = process.ID,
+                Process = processId,
                 Speed = ProcessSpeed,
                 BadSpeed = BadProcessSpeed
             };
@@ -49,7 +67,7 @@ namespace ModName.src.Customs
     {
         public string BonusStatus;
 
-        public override bool TryConvert(in GameData gameData, out CAppliesStatus effectType)
+        public override bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out CAppliesStatus effectType)
         {
             if (!Enum.TryParse(BonusStatus, out DecorationBonus decorationBonus))
             {
@@ -67,95 +85,34 @@ namespace ModName.src.Customs
 
     public class CTableModifierEffectData : EffectTypeData<CTableModifier>
     {
-        public float EatingTimeModifier;
-        public float ThinkingTimeModifier;
-        public float SeatingTimeModifier;
-        public float ServiceTimeModifier;
-        public float WaitForFoodTimeModifier;
-        public float DeliveryTimeModifier;
-        public float DrinkDeliveredRecovery;
-        public float ItemDeliveredRecovery;
-        public float FoodDeliveredRecovery;
-        public bool SkipThinking;
-        public bool InfinitePatienceInsideIfHasQueue;
-        public bool DestroyTableWhenLeave;
-        public bool BonusPatienceWhenNearby;
-        public bool ResetPatienceOption; // Unknown
-        public bool ProvidesQueuePatienceBoost; // Unknown
+        public string PatienceValuesName;
+        public string OrderingValuesName;
 
-        public float StarterChanceModifier;
-        public float SidesChanceModifier;
-        public float DessertChanceModifier;
-        public float ChangeMindModifier;
-        public float RepeatCourseModifier;
-        public bool GroupOrdersSame;
-        public bool SidesOptional;
-        public bool CustomerPaysFlatFee;
-        public int BonusPerDelivery;
-        public float ConsumableReuseChanceModifier;
-        public float MessFactor;
-        public bool PreventMess;
-        public int GroupMinimumShare;
-        public float PriceModifier;
-        public int FlatFeeAmount;
-        public bool SeatWithoutClear;
-
-        public override bool TryConvert(in GameData gameData, out CTableModifier effectType)
+        public override bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out CTableModifier effectType)
         {
-            if (!ValidationUtils.IsNonNegative(EatingTimeModifier, "EatingTimeModifier") ||
-                !ValidationUtils.IsNonNegative(ThinkingTimeModifier, "ThinkingTimeModifier") ||
-                !ValidationUtils.IsNonNegative(SeatingTimeModifier, "SeatingTimeModifier") ||
-                !ValidationUtils.IsNonNegative(ServiceTimeModifier, "ServiceTimeModifier") ||
-                !ValidationUtils.IsNonNegative(WaitForFoodTimeModifier, "WaitForFoodTimeModifier") ||
-                !ValidationUtils.IsNonNegative(DeliveryTimeModifier, "DeliveryTimeModifier") ||
-                !ValidationUtils.IsNonNegative(StarterChanceModifier, "StarterChanceModifier") ||
-                !ValidationUtils.IsNonNegative(SidesChanceModifier, "SidesChanceModifier") ||
-                !ValidationUtils.IsNonNegative(DessertChanceModifier, "DessertChanceModifier"))
+            effectType = default;
+
+            if (PatienceValuesName.IsNullOrEmpty())
             {
-                effectType = default;
+                Main.LogError("PatienceValuesName cannot be empty.");
+                return false;
+            }
+            if (OrderingValuesName.IsNullOrEmpty())
+            {
+                Main.LogError("OrderingValuesName cannot be empty.");
+                return false;
+            }
+
+            if (!resourceDirectory.TryGetConvertedStruct(PatienceValuesName, out PatienceValues patienceValues) ||
+                !resourceDirectory.TryGetConvertedStruct(OrderingValuesName, out OrderingValues orderingValues))
+            {
                 return false;
             }
 
             effectType = new CTableModifier()
             {
-                PatienceModifiers = new PatienceValues()
-                {
-                    Eating = EatingTimeModifier,
-                    Thinking = ThinkingTimeModifier,
-                    Seating = SeatingTimeModifier,
-                    Service = ServiceTimeModifier,
-                    WaitForFood = WaitForFoodTimeModifier,
-                    GetFoodDelivered = DeliveryTimeModifier,
-                    DrinkDeliverBonus = DrinkDeliveredRecovery,
-                    ItemDeliverBonus = ItemDeliveredRecovery,
-                    FoodDeliverBonus = FoodDeliveredRecovery,
-                    SkipWaitPhase = SkipThinking,
-                    InfinitePatienceIfQueue = InfinitePatienceInsideIfHasQueue,
-                    DestroyTableIfLeave = DestroyTableWhenLeave,
-                    BonusPatienceWhenNearby = BonusPatienceWhenNearby,
-                    ResetPatienceOption = ResetPatienceOption,
-                    ProvidesQueuePatienceBoost = ProvidesQueuePatienceBoost
-                },
-
-                OrderingModifiers = new OrderingValues()
-                {
-                    StarterModifier = StarterChanceModifier,
-                    SidesModifier = SidesChanceModifier,
-                    DessertModifier = DessertChanceModifier,
-                    ChangeMindModifier = ChangeMindModifier,
-                    RepeatCourseModifier = RepeatCourseModifier,
-                    GroupOrdersSame = GroupOrdersSame,
-                    SidesOptional = SidesOptional,
-                    IsOnlyFlatFee = CustomerPaysFlatFee,
-                    BonusPerDelivery = BonusPerDelivery,
-                    ConsumableReuseChance = ConsumableReuseChanceModifier,
-                    MessFactor = MessFactor,
-                    PreventMess = PreventMess,
-                    MinimumShare = GroupMinimumShare,
-                    PriceModifier = PriceModifier,
-                    FlatFee = FlatFeeAmount,
-                    SeatWithoutClear = SeatWithoutClear
-                }
+                PatienceModifiers = patienceValues,
+                OrderingModifiers = orderingValues
             };
             return true;
 
@@ -166,7 +123,7 @@ namespace ModName.src.Customs
     {
         public float QueueFactor;
 
-        public override bool TryConvert(in GameData gameData, out CQueueModifier effectType)
+        public override bool TryConvert(in GameData gameData, in ResourceDirectory resourceDirectory, out CQueueModifier effectType)
         {
             if (!ValidationUtils.IsNonNegative(QueueFactor, "QueueFactor"))
             {

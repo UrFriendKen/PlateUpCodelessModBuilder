@@ -1,0 +1,7 @@
+{
+  "Name": "CMB_CApplianceSpeedModifierExample",
+  "AffectsAllProcesses": true,
+  "AffectedProcess": "Cook",
+  "ProcessSpeed": 2.0,
+  "BadProcessSpeed": 3.0
+}
