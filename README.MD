@@ -10,7 +10,7 @@ The goal of this project is to allow creating and registering standard PlateUp O
 
 ## Getting Started
 
-Download the repo as a zip file. Whenever you want to create a new mod, extract the contents of the zip to a new folder.
+Download the latest source code zip file from [releases](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/releases). Whenever you want to create a new mod, extract the contents of the zip to a new folder.
 
 In it you will find these folders/files of interest:
 
