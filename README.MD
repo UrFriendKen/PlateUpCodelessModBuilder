@@ -16,7 +16,7 @@ In it you will find these folders/files of interest:
 
 * Resources Folder
   * Contains files for your mod (See 'Resources' section for more infomation)
-  * Starts with templates you can use
+  * Starts with templates you can use (Remove any files you do not need before distributing your mod on the workshop)
 
 * `ModName.csproj`
   * Rename this to your mod name (without spaces or dashes, and only using letters)<br>- You are NOT required to open or modify this file<br>- When renaming .csproj, if you have previously ran `build.bat`, you must delete the out of date folder in PlateUp install directory (It can be found in the Mods folder, if there is one)
