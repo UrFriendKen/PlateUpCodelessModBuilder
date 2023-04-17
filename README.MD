@@ -1,6 +1,6 @@
 # PLATEUP CODELESS MOD BUILDER
 
-The goal of this project is to allow creating and registering standard PlateUp Objects without writing any C# code.
+The goal of this project is to allow creating and registering standard PlateUp Objects without writing any C# code. You can each out to me (IcedMilo) on the [Unofficial PlateUp Modding Discord](https://discord.gg/4BXYsWNUBb) if you encounter issues.
 
 ## Requirements
 
@@ -23,6 +23,8 @@ In it you will find these folders/files of interest:
 
 * `build.bat`
   * Run this to compile your mod
+  * Then run the game to test
+  * Note: This does not release your mod to the Steam WORKSHOP. That is done separately through `ModUploader.exe` found in your game install directory. For more info on how to do this, you can ask around in the discord.
 
 ## Resources
 
