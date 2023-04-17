@@ -78,22 +78,15 @@ For more information about the various types, see the [wiki](https://github.com/
 
 Currently supported Game Data Object (GDO) types are:
 
-* Decor
-
-* UnlockCard
+* [Decor](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/Decor)
+* [UnlockCard](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/UnlockCard)
 
 Currently supported non-GDO types are:
 
 * KLMaterial (Materials generated from KitchenLib's in-game material exporter)
-
-* UnlockInfo
-
-* UnlockEffect
-
-* CApplianceSpeedModifier
-
-* CAppliesStatus
-
-* CQueueModifier
-
-* CTableModifier
+* [UnlockInfo](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/UnlockInfo)
+* [UnlockEffect](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/UnlockEffect)
+* [CApplianceSpeedModifier](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/CApplianceSpeedModifier)
+* [CAppliesStatus](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/CAppliesStatus)
+* [CQueueModifier](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/CQueueModifier)
+* [CTableModifier](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki/CTableModifier)
