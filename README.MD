@@ -74,7 +74,7 @@ You must also modify the details in `metadata.json` to include your author name 
 
 ## Defining Objects
 
-For more information about the various types, see the wiki.
+For more information about the various types, see the [wiki](https://github.com/UrFriendKen/PlateUpCodelessModBuilder/wiki).
 
 Currently supported Game Data Object (GDO) types are:
 
